@@ -17,7 +17,7 @@ var DB *gorm.DB
 func Connect() (*gorm.DB, error) {
 
 	// Завантажуємо .env
-	
+
 	err := godotenv.Load()
 	if err != nil {
 		log.Println(" Не вдалося завантажити .env, використовую системні змінні")
@@ -28,6 +28,11 @@ func Connect() (*gorm.DB, error) {
 	user := os.Getenv("DB_USER")
 	password := os.Getenv("DB_PASSWORD")
 	dbname := os.Getenv("DB_NAME")
+
+	// Тимчасово для перевірчи читається .env фаіл
+
+	fmt.Println("DB_PORT:", port)
+	fmt.Println("DB_HOST:", host)
 
 	// Формуємо DSN
 
