@@ -12,24 +12,32 @@ import (
 // Всі методи використовують WithContext(ctx) — корисно для таймаутів/тестів.
 
 type ProductRepository interface {
-	Create(ctx context.Context, p *models.Product) error
-	GetByID(ctx context.Context, id uint) (*models.Product, error)
+	Create(ctx context.Context, p *models.Product) error                          // p.ID заповнюється автоматично
+	GetByID(ctx context.Context, id uint) (*models.Product, error)                // повертає nil, nil якщо не знайдено
 	List(ctx context.Context, limit, offset int) ([]models.Product, int64, error) // returns items, totalCount
 	Update(ctx context.Context, p *models.Product) error
 	Delete(ctx context.Context, id uint) error
 }
 
+// productRepo реалізує ProductRepository
+
 type productRepo struct {
 	db *gorm.DB
 }
+
+// NewProductRepository створює новий ProductRepository
 
 func NewProductRepository(db *gorm.DB) ProductRepository {
 	return &productRepo{db: db}
 }
 
+// Create додає новий продукт в базу даних
+
 func (r *productRepo) Create(ctx context.Context, p *models.Product) error {
 	return r.db.WithContext(ctx).Create(p).Error
 }
+
+// GetByID шукає продукт за ID
 
 func (r *productRepo) GetByID(ctx context.Context, id uint) (*models.Product, error) {
 	var p models.Product
@@ -38,6 +46,8 @@ func (r *productRepo) GetByID(ctx context.Context, id uint) (*models.Product, er
 	}
 	return &p, nil
 }
+
+// List повертає продукти з пагінацією
 
 func (r *productRepo) List(ctx context.Context, limit, offset int) ([]models.Product, int64, error) {
 	var items []models.Product
@@ -52,9 +62,13 @@ func (r *productRepo) List(ctx context.Context, limit, offset int) ([]models.Pro
 	return items, total, nil
 }
 
+// Update змінює дані продукту
+
 func (r *productRepo) Update(ctx context.Context, p *models.Product) error {
 	return r.db.WithContext(ctx).Save(p).Error
 }
+
+// Delete видаляє продукт за ID
 
 func (r *productRepo) Delete(ctx context.Context, id uint) error {
 	return r.db.WithContext(ctx).Delete(&models.Product{}, id).Error

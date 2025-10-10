@@ -10,18 +10,22 @@ import (
 	"github.com/AlexRijikov/go-petshop-api/internal/service"
 )
 
-// Тестуємо бізнес-логіку без DB.
+// Тестуємо бізнес-логіку без БД, використовуючи in-memory репозиторій.
 
-// Простий in-memory repo реалізує repositories.ProductRepository для тесту
+// Простий in-memory repo реалізує repositories.ProductRepository для тестів.
 
 type memRepo struct {
 	data map[uint]*models.Product
 	next uint
 }
 
+// newMemRepo створює новий in-memory репозиторій
+
 func newMemRepo() *memRepo {
 	return &memRepo{data: map[uint]*models.Product{}, next: 1}
 }
+
+// Реалізація методів ProductRepository для memRepo
 
 func (m *memRepo) Create(ctx context.Context, p *models.Product) error {
 	p.ID = m.next
@@ -29,6 +33,9 @@ func (m *memRepo) Create(ctx context.Context, p *models.Product) error {
 	m.data[p.ID] = p
 	return nil
 }
+
+// GetByID повертає продукт за ID або nil, nil якщо не знайдено
+
 func (m *memRepo) GetByID(ctx context.Context, id uint) (*models.Product, error) {
 	p, ok := m.data[id]
 	if !ok {
@@ -36,6 +43,9 @@ func (m *memRepo) GetByID(ctx context.Context, id uint) (*models.Product, error)
 	}
 	return p, nil
 }
+
+// List повертає всі продукти (без реальної пагінації для простоти)
+
 func (m *memRepo) List(ctx context.Context, limit, offset int) ([]models.Product, int64, error) {
 	var out []models.Product
 	for _, v := range m.data {
@@ -43,14 +53,22 @@ func (m *memRepo) List(ctx context.Context, limit, offset int) ([]models.Product
 	}
 	return out, int64(len(out)), nil
 }
+
+// Update оновлює продукт в пам'яті (перезаписує по ID)
+
 func (m *memRepo) Update(ctx context.Context, p *models.Product) error {
 	m.data[p.ID] = p
 	return nil
 }
+
+// Delete видаляє продукт з пам'яті
+
 func (m *memRepo) Delete(ctx context.Context, id uint) error {
 	delete(m.data, id)
 	return nil
 }
+
+// Тести для ProductService
 
 func TestCreateProduct(t *testing.T) {
 	repo := newMemRepo()
@@ -66,6 +84,8 @@ func TestCreateProduct(t *testing.T) {
 	assert.NotNil(t, created)
 	assert.Equal(t, uint(1), created.ID)
 }
+
+// Тест створення продукту з некоректною ціною
 
 func TestCreateInvalidPrice(t *testing.T) {
 	repo := newMemRepo()

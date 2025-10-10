@@ -17,14 +17,17 @@ import (
 
 // Помилки переводимо в HTTP-статуси.
 
+// ProductHandler обробляє HTTP-запити, пов'язані з продуктами
 type ProductHandler struct {
 	svc services.ProductService
 }
 
+// NewProductHandler створює новий ProductHandler з наданим сервісом
 func NewProductHandler(s services.ProductService) *ProductHandler {
 	return &ProductHandler{svc: s}
 }
 
+// RegisterRoutes реєструє маршрути продуктів у вказаній групі маршрутизатора (rg *gin.RouterGroup)
 func (h *ProductHandler) RegisterRoutes(rg *gin.RouterGroup) {
 	grp := rg.Group("/products")
 	grp.GET("", h.List)
@@ -34,6 +37,8 @@ func (h *ProductHandler) RegisterRoutes(rg *gin.RouterGroup) {
 	grp.DELETE("/:id", h.Delete)
 }
 
+// createProductRequest використовується для прив'язки та валідації вхідних даних при створенні або оновленні продукту
+
 type createProductRequest struct {
 	Name        string `json:"name" binding:"required,min=2,max=255"`
 	Description string `json:"description" binding:"omitempty,max=2000"`
@@ -42,7 +47,7 @@ type createProductRequest struct {
 	SKU         string `json:"sku" binding:"omitempty,max=100"`
 }
 
-// Create ( Строрити )
+// Create (Створення нового продукту)
 
 func (h *ProductHandler) Create(c *gin.Context) {
 	var req createProductRequest
@@ -65,6 +70,8 @@ func (h *ProductHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, created)
 }
 
+// List (Список продуктів з пагінацією)
+
 func (h *ProductHandler) List(c *gin.Context) {
 	limit := 20
 	offset := 0
@@ -86,7 +93,7 @@ func (h *ProductHandler) List(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"items": items, "total": total, "limit": limit, "offset": offset})
 }
 
-// GetByID (Получить по идентификатору)
+// GetByID (Отримання продукту за ID)
 
 func (h *ProductHandler) GetByID(c *gin.Context) {
 	idParam := c.Param("id")
@@ -103,7 +110,7 @@ func (h *ProductHandler) GetByID(c *gin.Context) {
 	c.JSON(http.StatusOK, p)
 }
 
-// Update ( Оновлення )
+// Update (Оновлення продукту)
 
 func (h *ProductHandler) Update(c *gin.Context) {
 	idParam := c.Param("id")
@@ -133,7 +140,7 @@ func (h *ProductHandler) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, updated)
 }
 
-// Delete (Видалення)
+// Delete (Видалення продукту)
 
 func (h *ProductHandler) Delete(c *gin.Context) {
 	idParam := c.Param("id")
