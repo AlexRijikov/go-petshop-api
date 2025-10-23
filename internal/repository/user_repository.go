@@ -18,7 +18,11 @@ type UserRepository interface {
 	GetByEmail(ctx context.Context, email string) (*models.User, error)  // шукає користувача за email
 	GetByUsername(username string) (*models.User, error)                 // шукає користувача за username
 	GetByID(id uint) (*models.User, error)                               // шукає користувача за ID
+	GetAll(ctx context.Context) ([]models.User, error)                   // отримує всіх користувачів з бази даних
+	UpdatePassword(id uint, hashedPassword string) error                 // оновлює пароль користувача за його ID
 	UpdateProfile(id uint, username, email string) (*models.User, error) // оновлює дані користувача (username, email)
+	Update(ctx context.Context, user *models.User) error                 // оновлює користувача в базі даних
+	Delete(ctx context.Context, id uint) error                           // видаляє користувача з бази даних
 }
 
 // userRepo реалізує UserRepository
@@ -60,6 +64,7 @@ func (r *userRepo) GetByUsername(username string) (*models.User, error) {
 }
 
 // GetByID шукає користувача за ID і повертає його або помилку, якщо не знайдено
+
 func (r *userRepo) GetByID(id uint) (*models.User, error) {
 
 	var user models.User                                // створюємо змінну для збереження знайденого користувача
@@ -67,6 +72,16 @@ func (r *userRepo) GetByID(id uint) (*models.User, error) {
 		return nil, err // якщо користувача не знайдено, повертаємо помилку
 	}
 	return &user, nil // повертаємо знайденого користувача
+}
+
+// GetAll отримує всіх користувачів з бази даних і повертає їх у вигляді зрізу User
+
+func (r *userRepo) GetAll(ctx context.Context) ([]models.User, error) {
+	var users []models.User
+	if err := r.db.WithContext(ctx).Find(&users).Error; err != nil {
+		return nil, err
+	}
+	return users, nil
 }
 
 // UpdateProfile оновлює дані користувача (username, email) за його ID
@@ -88,4 +103,25 @@ func (r *userRepo) UpdateProfile(id uint, username, email string) (*models.User,
 	}
 	return &user, nil // повертаємо оновленого користувача
 
+}
+
+// Update оновлює користувача в базі даних (використовується для оновлення пароля, ролі тощо)
+
+func (r *userRepo) Update(ctx context.Context, user *models.User) error {
+	return r.db.WithContext(ctx).Save(user).Error // зберігаємо оновленого користувача в базі даних
+
+}
+
+// UpdatePassword оновлює пароль користувача за його ID (використовується для зміни пароля користувача)
+
+func (r *userRepo) UpdatePassword(id uint, hashedPassword string) error {
+	return r.db.Model(&models.User{}).
+		Where("id = ?", id).                     // шукаємо користувача за ID
+		Update("password", hashedPassword).Error // оновлюємо поле password на новий хешований пароль
+}
+
+// Delete видаляє користувача з бази даних за його ID
+
+func (r *userRepo) Delete(ctx context.Context, id uint) error {
+	return r.db.WithContext(ctx).Delete(&models.User{}, id).Error // видаляємо користувача за ID з бази даних
 }
